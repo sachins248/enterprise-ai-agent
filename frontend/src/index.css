@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg:          #07080e;
+  --surface:     #0c0f1a;
+  --card:        #111628;
+  --border:      #1c2038;
+  --border-hi:   #2a3058;
+  --accent:      #00e676;
+  --accent-glow: rgba(0, 230, 118, 0.13);
+  --accent-dim:  rgba(0, 230, 118, 0.55);
+  --gold:        #fbbf24;
+  --text-1:      #dde5f8;
+  --text-2:      #6a7898;
+  --text-3:      #343d58;
+  --error:       #ff5252;
+  --error-bg:    rgba(255, 82, 82, 0.08);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar        { width: 3px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--border-hi); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+/* ── Keyframes ──────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── Utility classes ────────────────────────────────── */
+.msg-enter {
+  animation: fadeUp 0.22s ease-out;
+}
+
+.cursor-blink {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  background: var(--accent);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+/* Subtle scanline texture overlay */
+.scanlines {
+  position: relative;
+}
+.scanlines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.055) 3px,
+    rgba(0, 0, 0, 0.055) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Dot-grid background for login panel */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(0, 230, 118, 0.14) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Select options */
+select option {
+  background: var(--card);
+  color: var(--text-1);
+}
