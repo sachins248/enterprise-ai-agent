@@ -1,0 +1,54 @@
+name: AI Code Analysis
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest  # free on GitHub Actions
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Sends the full GitHub push event payload to our platform for Gemini analysis.
+      # Configure WEBHOOK_URL in GitHub repo Settings → Secrets and variables → Secrets.
+      # Example: https://your-domain.com  (or use ngrok for local testing)
+      - name: Send push event to AI platform
+        if: ${{ secrets.WEBHOOK_URL != '' }}
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          GITHUB_WEBHOOK_SECRET: ${{ secrets.GITHUB_WEBHOOK_SECRET }}
+        run: |
+          PAYLOAD='${{ toJson(github.event) }}'
+
+          # If a webhook secret is configured, sign the payload with HMAC-SHA256
+          if [ -n "$GITHUB_WEBHOOK_SECRET" ]; then
+            SIGNATURE="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$GITHUB_WEBHOOK_SECRET" | awk '{print $2}')"
+            curl -f -s -X POST "${WEBHOOK_URL}/agent/webhook/github" \
+              -H "Content-Type: application/json" \
+              -H "X-Hub-Signature-256: ${SIGNATURE}" \
+              -H "X-GitHub-Event: push" \
+              -d "$PAYLOAD" \
+              && echo "✓ Webhook delivered" \
+              || echo "⚠ Webhook delivery failed (non-fatal)"
+          else
+            curl -f -s -X POST "${WEBHOOK_URL}/agent/webhook/github" \
+              -H "Content-Type: application/json" \
+              -H "X-GitHub-Event: push" \
+              -d "$PAYLOAD" \
+              && echo "✓ Webhook delivered" \
+              || echo "⚠ Webhook delivery failed (non-fatal)"
+          fi
+
+      - name: Fetch analysis result
+        if: ${{ secrets.WEBHOOK_URL != '' }}
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          REPO="${{ github.repository }}"
+          sleep 5  # give the platform time to process
+          curl -s "${WEBHOOK_URL}/agent/pipeline/${REPO}/latest" \
+            -H "Authorization: Bearer ${{ secrets.PLATFORM_TOKEN }}" \
+            | python3 -m json.tool || echo "Could not fetch analysis result"
