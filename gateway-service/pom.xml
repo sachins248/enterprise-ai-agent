@@ -1,58 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- This file tells Maven how to build the gateway service -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- The version of the pom file format (always 4.0.0) -->
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- The parent pom gives us shared versions so all services stay in sync -->
     <parent>
+        <!-- The group of the parent project -->
         <groupId>com.enterprise</groupId>
+        <!-- The name of the parent project -->
         <artifactId>enterprise-ai-agent</artifactId>
+        <!-- The version of the parent project -->
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
+    <!-- The name Maven uses for this module -->
     <artifactId>gateway-service</artifactId>
+    <!-- A friendly name shown in build logs -->
     <name>Gateway Service</name>
 
+    <!-- The libraries this service needs -->
     <dependencies>
         <!-- Spring Cloud Gateway uses Reactor/Netty (reactive) — do NOT add spring-boot-starter-web here -->
+        <!-- The gateway tools that send requests to the right service -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway</artifactId>
         </dependency>
+        <!-- Gives us the health check page that Docker uses -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <!-- Redis for sliding window rate limiting -->
+        <!-- Lets us talk to Redis without blocking -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
         </dependency>
         <!-- JPA + PostgreSQL for TeamConfig (per-team rate limit settings) -->
+        <!-- Lets us save data to the database -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+        <!-- The PostgreSQL driver (only needed when the app runs) -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
         <!-- JJWT for validating tokens before forwarding requests -->
+        <!-- The JWT classes we write code against -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
         </dependency>
+        <!-- The JWT engine that does the work (only needed when the app runs) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- Lets JWT read and write JSON (only needed when the app runs) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- Testing tools (only used when running tests) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -60,8 +78,11 @@
         </dependency>
     </dependencies>
 
+    <!-- Settings for how the project is built -->
     <build>
+        <!-- The build tools we use -->
         <plugins>
+            <!-- Packages the app into one runnable jar file -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
