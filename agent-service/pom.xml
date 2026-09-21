@@ -1,18 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- This file tells Maven how to build the agent service -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- The version of the pom file format (always 4.0.0) -->
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- The parent pom gives us shared versions so all services stay in sync -->
     <parent>
+        <!-- The group of the parent project -->
         <groupId>com.enterprise</groupId>
+        <!-- The name of the parent project -->
         <artifactId>enterprise-ai-agent</artifactId>
+        <!-- The version of the parent project -->
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
+    <!-- The name Maven uses for this module -->
     <artifactId>agent-service</artifactId>
+    <!-- A friendly name shown in build logs -->
     <name>Agent Service</name>
 
+    <!-- The libraries this service needs -->
     <dependencies>
         <!-- WebFlux for non-blocking HTTP calls to Gemini API and Server-Sent Events -->
         <dependency>
@@ -24,39 +33,47 @@
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
         </dependency>
+        <!-- Lets us save data to the database -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+        <!-- The PostgreSQL driver (only needed when the app runs) -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- Gives us the health check page that Docker uses -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <!-- Testing tools (only used when running tests) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Tools for testing reactive code (only used when running tests) -->
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
         <!-- JJWT for validating tokens issued by auth-service -->
+        <!-- The JWT classes we write code against -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
         </dependency>
+        <!-- The JWT engine that does the work (only needed when the app runs) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- Lets JWT read and write JSON (only needed when the app runs) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
@@ -64,8 +81,11 @@
         </dependency>
     </dependencies>
 
+    <!-- Settings for how the project is built -->
     <build>
+        <!-- The build tools we use -->
         <plugins>
+            <!-- Packages the app into one runnable jar file -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
