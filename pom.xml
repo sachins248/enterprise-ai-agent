@@ -1,36 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- This is the parent pom: it holds the settings that all 5 services share -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- The version of the pom file format (always 4.0.0) -->
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Our parent is Spring Boot's parent, which gives us tested library versions -->
     <parent>
+        <!-- The group of Spring Boot's parent -->
         <groupId>org.springframework.boot</groupId>
+        <!-- The name of Spring Boot's parent -->
         <artifactId>spring-boot-starter-parent</artifactId>
+        <!-- The Spring Boot version that all services use -->
         <version>3.2.3</version>
+        <!-- Empty means "look it up online" instead of in a local folder -->
         <relativePath/>
     </parent>
 
+    <!-- The group name for our whole project -->
     <groupId>com.enterprise</groupId>
+    <!-- The name of the whole project -->
     <artifactId>enterprise-ai-agent</artifactId>
+    <!-- The version of the whole project (SNAPSHOT means "still in development") -->
     <version>1.0.0-SNAPSHOT</version>
+    <!-- "pom" means this project only groups other modules and has no code of its own -->
     <packaging>pom</packaging>
+    <!-- A friendly name shown in build logs -->
     <name>Enterprise AI Agent Platform</name>
 
+    <!-- The services that Maven builds together -->
     <modules>
+        <!-- The front door that sends requests to the right service -->
         <module>gateway-service</module>
+        <!-- Handles login and registration -->
         <module>auth-service</module>
+        <!-- Talks to the Gemini AI -->
         <module>agent-service</module>
+        <!-- Keeps a record of what users do -->
         <module>audit-service</module>
+        <!-- Counts usage and makes reports -->
         <module>analytics-service</module>
     </modules>
 
+    <!-- Shared values that other parts of the pom can use -->
     <properties>
+        <!-- All services use Java 17 -->
         <java.version>17</java.version>
+        <!-- The Spring Cloud version (needed for the gateway) -->
         <spring-cloud.version>2023.0.0</spring-cloud.version>
+        <!-- The JWT library version (one place so all services match) -->
         <jjwt.version>0.12.5</jjwt.version>
     </properties>
 
+    <!-- Sets library versions once here, so services don't need to write them -->
     <dependencyManagement>
         <dependencies>
             <!-- Spring Cloud BOM — manages versions for spring-cloud-starter-gateway etc. -->
@@ -42,16 +65,19 @@
                 <scope>import</scope>
             </dependency>
             <!-- JJWT — three artifacts needed for JWT create/parse/serialize -->
+            <!-- The JWT classes we write code against -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-api</artifactId>
                 <version>${jjwt.version}</version>
             </dependency>
+            <!-- The JWT engine that does the work -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-impl</artifactId>
                 <version>${jjwt.version}</version>
             </dependency>
+            <!-- Lets JWT read and write JSON -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-jackson</artifactId>
@@ -60,9 +86,12 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- Settings for how the projects are built -->
     <build>
+        <!-- Sets up build tools once here so services can use them without extra settings -->
         <pluginManagement>
             <plugins>
+                <!-- Packages each service into one runnable jar file -->
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>

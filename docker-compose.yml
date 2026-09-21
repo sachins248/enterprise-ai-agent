@@ -1,255 +1,477 @@
+# This file starts the whole platform (databases, Kafka, Redis and all 5 services) with one command
+# The list of containers Docker will run
 services:
 
   # ─── Infrastructure ────────────────────────────────────────────────────────
 
+  # The database that stores users, chats, audit records and analytics
   postgres:
+    # Use the small (alpine) PostgreSQL 15 image
     image: postgres:15-alpine
+    # Give the container a fixed name so other containers can find it
     container_name: postgres
+    # Settings passed into the container
     environment:
+      # The database admin user name
       POSTGRES_USER: postgres
+      # The admin password, read from the .env file
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # The first database to create
       POSTGRES_DB: postgres
+    # Folders shared between your computer and the container
     volumes:
+      # Keep database files in a Docker volume so data survives restarts
       - postgres_data:/var/lib/postgresql/data
       # init-db.sql runs automatically on first container start, creating all 4 service DBs
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    # Open a port so you can connect from your computer
     ports:
+      # Your computer's port 5432 goes to the container's port 5432
       - "5432:5432"
+    # Put the container on our shared network
     networks:
       - agent-network
+    # A check Docker runs to see if the database is ready
     healthcheck:
+      # Ask PostgreSQL "are you ready?"
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      # Check every 10 seconds
       interval: 10s
+      # Give each check 5 seconds to answer
       timeout: 5s
+      # After 5 failed checks, mark it unhealthy
       retries: 5
+      # Wait 10 seconds before the first check
       start_period: 10s
 
+  # The fast in-memory store used for caching and rate limits
   redis:
+    # Use the small (alpine) Redis 7 image
     image: redis:7-alpine
+    # Give the container a fixed name so other containers can find it
     container_name: redis
     # Empty password = no auth in dev; set REDIS_PASSWORD in .env for production
     command: >
       sh -c "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-server --requirepass $$REDIS_PASSWORD; else redis-server; fi"
+    # Folders shared between your computer and the container
     volumes:
+      # Keep Redis data in a Docker volume
       - redis_data:/data
+    # Open a port so you can connect from your computer
     ports:
+      # Your computer's port 6379 goes to the container's port 6379
       - "6379:6379"
+    # Put the container on our shared network
     networks:
       - agent-network
+    # A check Docker runs to see if Redis is ready
     healthcheck:
+      # Send "ping" and expect "PONG"
       test: ["CMD", "redis-cli", "ping"]
+      # Check every 10 seconds
       interval: 10s
+      # Give each check 5 seconds to answer
       timeout: 5s
+      # After 5 failed checks, mark it unhealthy
       retries: 5
+      # Wait 5 seconds before the first check
       start_period: 5s
 
+  # The message system that lets services send events to each other
   kafka:
+    # Use the official Apache Kafka image
     image: apache/kafka:3.8.1
+    # Give the container a fixed name so other containers can find it
     container_name: kafka
+    # The name other containers use to reach Kafka
     hostname: kafka
+    # Settings passed into the container
     environment:
       # KRaft mode — no Zookeeper needed
+      # The id of this Kafka node
       KAFKA_NODE_ID: 1
+      # This one node does both jobs: it handles messages and manages the cluster
       KAFKA_PROCESS_ROLES: broker,controller
+      # Who votes in the cluster (only this node, at port 9093)
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       # Three listeners:
       #   PLAINTEXT  — services inside Docker use kafka:9092
       #   CONTROLLER — KRaft metadata protocol (never exposed outside)
       #   EXTERNAL   — host machine tools use localhost:9094
+      # The ports Kafka listens on
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://0.0.0.0:9094
+      # The addresses Kafka tells clients to use to reach it
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      # Says every listener uses plain (not encrypted) connections
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      # Which listener the controller uses
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # Which listener Kafka nodes use to talk to each other
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # Create a topic automatically the first time someone uses it
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      # New topics get 3 partitions (lets consumers work in parallel)
       KAFKA_NUM_PARTITIONS: 3
+      # Only 1 copy of each message because we only have 1 node
       KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      # Only 1 copy of Kafka's internal offsets topic
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      # Don't wait before consumer groups start (faster startup in dev)
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       # Static cluster ID — required so KRaft storage is consistent across restarts.
       # Generated with: kafka-storage.sh random-uuid
+      # The fixed id of this Kafka cluster
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      # Where Kafka keeps its data inside the container
       KAFKA_LOG_DIRS: /var/lib/kafka/data
+    # Folders shared between your computer and the container
     volumes:
+      # Keep Kafka data in a Docker volume so messages survive restarts
       - kafka_data:/var/lib/kafka/data
+    # Open a port so you can connect from your computer
     ports:
+      # Your computer's port 9094 goes to the container's port 9094
       - "9094:9094"
+    # Put the container on our shared network
     networks:
       - agent-network
+    # A check Docker runs to see if Kafka is ready
     healthcheck:
+      # Ask Kafka for its topic list; if it answers, Kafka is ready
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      # Check every 15 seconds
       interval: 15s
+      # Give each check 10 seconds to answer
       timeout: 10s
+      # After 10 failed checks, mark it unhealthy
       retries: 10
+      # Wait 30 seconds before the first check (Kafka starts slowly)
       start_period: 30s
 
   # ─── Application Services ──────────────────────────────────────────────────
 
+  # The service that handles login and registration
   auth-service:
+    # How to build this container's image
     build:
+      # Use the whole project folder as the build context
       context: .
+      # Use this Dockerfile to build the image
       dockerfile: auth-service/Dockerfile
+    # Give the container a fixed name so other containers can find it
     container_name: auth-service
+    # Open a port so you can connect from your computer
     ports:
+      # Your computer's port 8081 goes to the container's port 8081
       - "8081:8081"
+    # Settings passed into the container
     environment:
+      # The port the service listens on
       AUTH_PORT: 8081
+      # The database server name (the postgres container)
       POSTGRES_HOST: postgres
+      # The database server port
       POSTGRES_PORT: 5432
+      # The database this service uses
       POSTGRES_DB: authdb
+      # The database user name
       POSTGRES_USER: postgres
+      # The database password, read from the .env file
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # The secret used to sign tokens, read from the .env file
       JWT_SECRET: ${JWT_SECRET}
+    # Put the container on our shared network
     networks:
       - agent-network
+    # Only start this container after the ones below are ready
     depends_on:
+      # Wait for the database
       postgres:
+        # "Healthy" means its health check passed
         condition: service_healthy
+    # A check Docker runs to see if the service is ready
     healthcheck:
+      # Call the health page; if it fails, exit with an error
       test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
+      # Check every 15 seconds
       interval: 15s
+      # Give each check 10 seconds to answer
       timeout: 10s
+      # After 5 failed checks, mark it unhealthy
       retries: 5
+      # Wait 60 seconds before the first check (Java apps start slowly)
       start_period: 60s
 
+  # The service that talks to the Gemini AI
   agent-service:
+    # How to build this container's image
     build:
+      # Use the whole project folder as the build context
       context: .
+      # Use this Dockerfile to build the image
       dockerfile: agent-service/Dockerfile
+    # Give the container a fixed name so other containers can find it
     container_name: agent-service
+    # Open a port so you can connect from your computer
     ports:
+      # Your computer's port 8082 goes to the container's port 8082
       - "8082:8082"
+    # Settings passed into the container
     environment:
+      # The port the service listens on
       AGENT_PORT: 8082
+      # The database server name (the postgres container)
       POSTGRES_HOST: postgres
+      # The database server port
       POSTGRES_PORT: 5432
+      # The database this service uses
       POSTGRES_DB: agentdb
+      # The database user name
       POSTGRES_USER: postgres
+      # The database password, read from the .env file
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Where Kafka is (inside Docker)
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # The Gemini key, read from the .env file
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      # The secret used to check tokens, read from the .env file
       JWT_SECRET: ${JWT_SECRET}
+      # The webhook secret (empty if not set)
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+    # Put the container on our shared network
     networks:
       - agent-network
+    # Only start this container after the ones below are ready
     depends_on:
+      # Wait for the database
       postgres:
+        # "Healthy" means its health check passed
         condition: service_healthy
+      # Wait for Kafka
       kafka:
+        # "Healthy" means its health check passed
         condition: service_healthy
+    # A check Docker runs to see if the service is ready
     healthcheck:
+      # Call the health page; if it fails, exit with an error
       test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health || exit 1"]
+      # Check every 15 seconds
       interval: 15s
+      # Give each check 10 seconds to answer
       timeout: 10s
+      # After 5 failed checks, mark it unhealthy
       retries: 5
+      # Wait 60 seconds before the first check (Java apps start slowly)
       start_period: 60s
 
+  # The service that keeps a record of what users do
   audit-service:
+    # How to build this container's image
     build:
+      # Use the whole project folder as the build context
       context: .
+      # Use this Dockerfile to build the image
       dockerfile: audit-service/Dockerfile
+    # Give the container a fixed name so other containers can find it
     container_name: audit-service
+    # Open a port so you can connect from your computer
     ports:
+      # Your computer's port 8083 goes to the container's port 8083
       - "8083:8083"
+    # Settings passed into the container
     environment:
+      # The port the service listens on
       AUDIT_PORT: 8083
+      # The database server name (the postgres container)
       POSTGRES_HOST: postgres
+      # The database server port
       POSTGRES_PORT: 5432
+      # The database this service uses
       POSTGRES_DB: auditdb
+      # The database user name
       POSTGRES_USER: postgres
+      # The database password, read from the .env file
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Where Kafka is (inside Docker)
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # The Kafka consumer group name for this service
       KAFKA_CONSUMER_GROUP_AUDIT: audit-group
+      # The secret used to check tokens, read from the .env file
       JWT_SECRET: ${JWT_SECRET}
+    # Put the container on our shared network
     networks:
       - agent-network
+    # Only start this container after the ones below are ready
     depends_on:
+      # Wait for the database
       postgres:
+        # "Healthy" means its health check passed
         condition: service_healthy
+      # Wait for Kafka
       kafka:
+        # "Healthy" means its health check passed
         condition: service_healthy
+    # A check Docker runs to see if the service is ready
     healthcheck:
+      # Call the health page; if it fails, exit with an error
       test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health || exit 1"]
+      # Check every 15 seconds
       interval: 15s
+      # Give each check 10 seconds to answer
       timeout: 10s
+      # After 5 failed checks, mark it unhealthy
       retries: 5
+      # Wait 60 seconds before the first check (Java apps start slowly)
       start_period: 60s
 
+  # The service that counts usage and makes reports
   analytics-service:
+    # How to build this container's image
     build:
+      # Use the whole project folder as the build context
       context: .
+      # Use this Dockerfile to build the image
       dockerfile: analytics-service/Dockerfile
+    # Give the container a fixed name so other containers can find it
     container_name: analytics-service
+    # Open a port so you can connect from your computer
     ports:
+      # Your computer's port 8084 goes to the container's port 8084
       - "8084:8084"
+    # Settings passed into the container
     environment:
+      # The port the service listens on
       ANALYTICS_PORT: 8084
+      # The database server name (the postgres container)
       POSTGRES_HOST: postgres
+      # The database server port
       POSTGRES_PORT: 5432
+      # The database this service uses
       POSTGRES_DB: analyticsdb
+      # The database user name
       POSTGRES_USER: postgres
+      # The database password, read from the .env file
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Where Kafka is (inside Docker)
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # The Kafka consumer group name for this service
       KAFKA_CONSUMER_GROUP_ANALYTICS: analytics-group
+      # The Redis server name (the redis container)
       REDIS_HOST: redis
+      # The Redis port
       REDIS_PORT: 6379
+      # The secret used to check tokens, read from the .env file
       JWT_SECRET: ${JWT_SECRET}
+    # Put the container on our shared network
     networks:
       - agent-network
+    # Only start this container after the ones below are ready
     depends_on:
+      # Wait for the database
       postgres:
+        # "Healthy" means its health check passed
         condition: service_healthy
+      # Wait for Kafka
       kafka:
+        # "Healthy" means its health check passed
         condition: service_healthy
+      # Wait for Redis
       redis:
+        # "Healthy" means its health check passed
         condition: service_healthy
+    # A check Docker runs to see if the service is ready
     healthcheck:
+      # Call the health page; if it fails, exit with an error
       test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health || exit 1"]
+      # Check every 15 seconds
       interval: 15s
+      # Give each check 10 seconds to answer
       timeout: 10s
+      # After 5 failed checks, mark it unhealthy
       retries: 5
+      # Wait 60 seconds before the first check (Java apps start slowly)
       start_period: 60s
 
+  # The front door: every outside request goes through here first
   gateway-service:
+    # How to build this container's image
     build:
+      # Use the whole project folder as the build context
       context: .
+      # Use this Dockerfile to build the image
       dockerfile: gateway-service/Dockerfile
+    # Give the container a fixed name so other containers can find it
     container_name: gateway-service
+    # Open a port so you can connect from your computer
     ports:
+      # Your computer's port 8080 goes to the container's port 8080
       - "8080:8080"
+    # Settings passed into the container
     environment:
+      # The port the gateway listens on
       GATEWAY_PORT: 8080
+      # The database server name (the postgres container)
       POSTGRES_HOST: postgres
+      # The database server port
       POSTGRES_PORT: 5432
+      # The database this service uses
       POSTGRES_DB: gatewaydb
+      # The database user name
       POSTGRES_USER: postgres
+      # The database password, read from the .env file
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # The Redis server name (the redis container)
       REDIS_HOST: redis
+      # The Redis port
       REDIS_PORT: 6379
+      # The secret used to check tokens, read from the .env file
       JWT_SECRET: ${JWT_SECRET}
+    # Put the container on our shared network
     networks:
       - agent-network
+    # Only start this container after the ones below are ready
     depends_on:
+      # Wait for the database
       postgres:
+        # "Healthy" means its health check passed
         condition: service_healthy
+      # Wait for Redis
       redis:
+        # "Healthy" means its health check passed
         condition: service_healthy
+      # Wait for the auth service (the gateway sends login requests there)
       auth-service:
+        # "Healthy" means its health check passed
         condition: service_healthy
+      # Wait for the agent service (the gateway sends chat requests there)
       agent-service:
+        # "Healthy" means its health check passed
         condition: service_healthy
+    # A check Docker runs to see if the gateway is ready
     healthcheck:
+      # Call the health page; if it fails, exit with an error
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      # Check every 15 seconds
       interval: 15s
+      # Give each check 10 seconds to answer
       timeout: 10s
+      # After 5 failed checks, mark it unhealthy
       retries: 5
+      # Wait 60 seconds before the first check (Java apps start slowly)
       start_period: 60s
 
+# The networks our containers use
 networks:
+  # One shared network so containers can talk to each other by name
   agent-network:
+    # A normal private network on this computer
     driver: bridge
 
+# Named storage areas that keep data even when containers are removed
 volumes:
+  # Database files
   postgres_data:
+  # Redis files
   redis_data:
+  # Kafka files
   kafka_data:

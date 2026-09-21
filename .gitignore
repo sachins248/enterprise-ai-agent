@@ -1,32 +1,53 @@
 # Environment - never commit real credentials
+# The real .env file holds passwords and keys, so git must ignore it
 .env
+# Local env files for one machine only
 *.env.local
 
 # Maven
+# The folder where Maven puts built files
 target/
+# Maven's own settings folder
 .mvn/
+# But do keep the Maven wrapper jar (it lets others build without installing Maven)
 !.mvn/wrapper/maven-wrapper.jar
+# And keep the wrapper settings
 !.mvn/wrapper/maven-wrapper.properties
+# Built Java files should not be committed
 *.jar
+# Built web app files
 *.war
+# Built enterprise app files
 *.ear
 
 # IDE
+# IntelliJ settings folder
 .idea/
+# IntelliJ project files
 *.iml
+# VS Code settings folder
 .vscode/
+# Compiled Java classes
 *.class
+# Eclipse project file
 *.project
+# Eclipse classpath file
 *.classpath
+# Eclipse settings folder
 .settings/
 
 # OS
+# Mac folder info files
 .DS_Store
+# Windows thumbnail cache
 Thumbs.db
 
 # Logs
+# Log files
 *.log
+# Log folders
 logs/
 
 # Docker volumes
+# Local data folders used by containers
 data/

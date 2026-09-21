@@ -1,31 +1,49 @@
+# The name shown in the GitHub Actions tab
 name: AI Code Analysis
 
+# When this workflow runs
 on:
+  # Run it on every push
   push:
+    # But only for the main branch
     branches: [ main ]
 
+# The jobs this workflow runs
 jobs:
+  # One job called "analyze"
   analyze:
     runs-on: ubuntu-latest  # free on GitHub Actions
 
+    # The steps of the job, in order
     steps:
+      # Step 1: download the repository code onto the runner
       - name: Checkout code
+        # Use GitHub's official checkout action
         uses: actions/checkout@v4
 
       # Sends the full GitHub push event payload to our platform for Gemini analysis.
       # Configure WEBHOOK_URL in GitHub repo Settings → Secrets and variables → Secrets.
       # Example: https://your-domain.com  (or use ngrok for local testing)
+      # Step 2: send the push details to our platform
       - name: Send push event to AI platform
+        # Only run this step if a WEBHOOK_URL secret has been set
         if: ${{ secrets.WEBHOOK_URL != '' }}
+        # Values the script below can read
         env:
+          # Where to send the webhook
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          # The secret used to sign the webhook
           GITHUB_WEBHOOK_SECRET: ${{ secrets.GITHUB_WEBHOOK_SECRET }}
+        # The shell commands to run
         run: |
+          # Put the push event JSON into a variable
           PAYLOAD='${{ toJson(github.event) }}'
 
           # If a webhook secret is configured, sign the payload with HMAC-SHA256
           if [ -n "$GITHUB_WEBHOOK_SECRET" ]; then
+            # Make the signature that the agent service will check
             SIGNATURE="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$GITHUB_WEBHOOK_SECRET" | awk '{print $2}')"
+            # Send the payload with the signature header
             curl -f -s -X POST "${WEBHOOK_URL}/agent/webhook/github" \
               -H "Content-Type: application/json" \
               -H "X-Hub-Signature-256: ${SIGNATURE}" \
@@ -34,6 +52,7 @@ jobs:
               && echo "✓ Webhook delivered" \
               || echo "⚠ Webhook delivery failed (non-fatal)"
           else
+            # No secret set, so send the payload without a signature
             curl -f -s -X POST "${WEBHOOK_URL}/agent/webhook/github" \
               -H "Content-Type: application/json" \
               -H "X-GitHub-Event: push" \
@@ -42,13 +61,20 @@ jobs:
               || echo "⚠ Webhook delivery failed (non-fatal)"
           fi
 
+      # Step 3: fetch the AI's answer and print it in the log
       - name: Fetch analysis result
+        # Only run this step if a WEBHOOK_URL secret has been set
         if: ${{ secrets.WEBHOOK_URL != '' }}
+        # Values the script below can read
         env:
+          # Where our platform lives
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        # The shell commands to run
         run: |
+          # The repository name, like owner/repo
           REPO="${{ github.repository }}"
           sleep 5  # give the platform time to process
+          # Ask the platform for the latest analysis and print it nicely
           curl -s "${WEBHOOK_URL}/agent/pipeline/${REPO}/latest" \
             -H "Authorization: Bearer ${{ secrets.PLATFORM_TOKEN }}" \
             | python3 -m json.tool || echo "Could not fetch analysis result"
