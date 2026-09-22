@@ -1,4 +1,5 @@
 # Logs
+# Ignore log files and folders
 logs
 *.log
 npm-debug.log*
@@ -7,16 +8,21 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Downloaded packages and build output should not be committed
 node_modules
 dist
 dist-ssr
 *.local
 
 # Editor directories and files
+# Ignore most VS Code settings, but keep the shared extensions recommendation
 .vscode/*
 !.vscode/extensions.json
+# IntelliJ/WebStorm settings folder
 .idea
+# Mac folder info files
 .DS_Store
+# Windows and Visual Studio leftover files
 *.suo
 *.ntvs*
 *.njsproj
