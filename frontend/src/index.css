@@ -1,151 +1,134 @@
-/* Load the three fonts used across the app: headings, body text, and code */
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap');
+/* ── Fonts ──────────────────────────────────────────
+   Fraunces  — display headlines (serif, technical/editorial character)
+   Public Sans — all body/UI text
+   IBM Plex Mono — technical labels, stats, code */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
-/* Load Tailwind's base reset styles */
 @tailwind base;
-/* Load Tailwind's ready-made component styles */
 @tailwind components;
-/* Load Tailwind's utility classes (like p-4, flex, etc.) */
 @tailwind utilities;
 
-/* The app's color palette, reused everywhere with var(--name) */
+/* ── Design tokens ──────────────────────────────────
+   Light theme is the default (:root). Dark is an override
+   block activated by [data-theme="dark"] on <html>, set by
+   ThemeContext (and, before React mounts, by the inline
+   no-FOUC script in index.html). No translucent "glow" washes
+   anywhere in this system — every color below is flat. */
 :root {
-  /* The page background */
-  --bg:          #07080e;
-  /* A slightly lighter surface, like panels and headers */
-  --surface:     #0c0f1a;
-  /* Card and input backgrounds */
-  --card:        #111628;
-  /* Normal border color */
-  --border:      #1c2038;
-  /* A brighter border, used for highlights */
-  --border-hi:   #2a3058;
-  /* The main green accent color */
-  --accent:      #00e676;
-  /* A faint, see-through version of the accent, for glows and backgrounds */
-  --accent-glow: rgba(0, 230, 118, 0.13);
-  /* A dimmer accent, used for hover states */
-  --accent-dim:  rgba(0, 230, 118, 0.55);
-  /* The gold color used for the admin badge */
-  --gold:        #fbbf24;
-  /* The main (brightest) text color */
-  --text-1:      #dde5f8;
-  /* A softer text color for secondary text */
-  --text-2:      #6a7898;
-  /* The faintest text color, for hints and labels */
-  --text-3:      #343d58;
-  /* The color for error text */
-  --error:       #ff5252;
-  /* A faint red background for error boxes */
-  --error-bg:    rgba(255, 82, 82, 0.08);
+  --bg:          #F5F2EA;
+  --surface:     #EDE8DA;
+  --card:        #FAF7EF;
+  --border:      #D9D3C4;
+  --border-hi:   #B8AF97;
+  --text-1:      #171B24;
+  --text-2:      #5B6270;
+  --text-3:      #A39C89;
+  --accent:      #C1541A;
+  --accent-ink:  #35507A;
+  --error:       #B23A2E;
+  --success:     #5C7A52;
+  --role-admin:  #A87C1F;
+
+  --radius: 2px;
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Public Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
 }
 
-/* Make every element size itself including its border and padding, and remove default spacing */
+[data-theme="dark"] {
+  --bg:          #10141C;
+  --surface:     #141A24;
+  --card:        #181F2B;
+  --border:      #262E3D;
+  --border-hi:   #37425A;
+  --text-1:      #E7E3D6;
+  --text-2:      #8B93A6;
+  --text-3:      #4B5468;
+  --accent:      #E07A3E;
+  --accent-ink:  #6E8FC2;
+  --error:       #E1584A;
+  --success:     #7FA36C;
+  --role-admin:  #D3A63E;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Let the page fill the full height of the browser window */
 html, body, #root { height: 100%; }
 
-/* The base look of the whole page */
+/* Theme changes are instant (data-theme flips), but transition the few
+   properties that visibly shift so it doesn't feel like a hard flash */
 body {
-  /* The page background color */
   background: var(--bg);
-  /* The default text color */
   color: var(--text-1);
-  /* The default font */
-  font-family: 'Outfit', sans-serif;
-  /* Smoother text rendering on Mac browsers */
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 /* ── Scrollbar ──────────────────────────────────────── */
-/* A thin scrollbar for Chrome/Safari/Edge */
 ::-webkit-scrollbar        { width: 3px; }
-/* No visible track behind the scrollbar */
 ::-webkit-scrollbar-track  { background: transparent; }
-/* The draggable scrollbar thumb */
-::-webkit-scrollbar-thumb  { background: var(--border-hi); border-radius: 2px; }
-/* Brighten the thumb when hovered */
-::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+::-webkit-scrollbar-thumb  { background: var(--border-hi); border-radius: 1px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
 
 /* ── Keyframes ──────────────────────────────────────── */
-/* An animation that fades in while sliding up slightly */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* An animation that blinks on and off, like a text cursor */
 @keyframes cursor-blink {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
 
-/* ── Utility classes ────────────────────────────────── */
-/* Used on each new chat message so it animates in */
-.msg-enter {
-  animation: fadeUp 0.22s ease-out;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
-/* The blinking cursor shown while the AI is still typing */
+/* ── Utility classes ────────────────────────────────── */
+.msg-enter {
+  animation: fadeUp 0.18s ease-out;
+}
+
+/* The blinking cursor shown while the AI is still typing.
+   0 radius — a flat bar, not a rounded pill, per the sharp-corner rule. */
 .cursor-blink {
-  /* Show it like a small bar, not a full-width block */
   display: inline-block;
-  /* A thin vertical bar */
   width: 2px;
   height: 1.05em;
-  /* The accent color */
   background: var(--accent);
-  /* A little space before the bar */
   margin-left: 2px;
-  /* Line it up with the bottom of the text */
   vertical-align: text-bottom;
-  /* Slightly rounded ends */
-  border-radius: 1px;
-  /* Blink forever, one second per cycle */
+  border-radius: 0;
   animation: cursor-blink 1s step-end infinite;
 }
 
-/* Subtle scanline texture overlay */
-/* Used on the sidebar to add a faint scan-line texture */
-.scanlines {
-  /* Needed so the ::before overlay lines up correctly */
-  position: relative;
-}
-/* The actual scan-line pattern, drawn on top of the sidebar */
-.scanlines::before {
-  /* An empty layer (required for ::before to show) */
-  content: '';
-  /* Cover the whole element */
-  position: absolute;
-  inset: 0;
-  /* Repeating thin dark stripes */
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 3px,
-    rgba(0, 0, 0, 0.055) 3px,
-    rgba(0, 0, 0, 0.055) 4px
-  );
-  /* Let clicks pass through to the sidebar underneath */
-  pointer-events: none;
-  /* Sit above the sidebar's own background */
-  z-index: 0;
+.spin {
+  animation: spin 0.8s linear infinite;
 }
 
-/* Dot-grid background for login panel */
-/* Used on the login/register brand panel for a dotted background */
-.dot-grid {
-  /* A grid of small green dots */
-  background-image: radial-gradient(circle, rgba(0, 230, 118, 0.14) 1px, transparent 1px);
-  /* How far apart the dots are */
-  background-size: 28px 28px;
+/* Blueprint grid: faint hairline-color ruled lines at a fixed interval,
+   the one permitted "texture" in this system — it directly embodies the
+   technical-drawing motif rather than decorating for its own sake. */
+.blueprint-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 /* Select options */
-/* Style the dropdown list items to match the dark theme */
 select option {
   background: var(--card);
   color: var(--text-1);
+}
+
+/* Focus rings across the app: a crisp solid outline, never a blurred
+   box-shadow glow ring. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }

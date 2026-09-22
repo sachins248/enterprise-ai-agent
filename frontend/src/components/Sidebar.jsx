@@ -2,420 +2,100 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 // Lets us read the user and the logout function
 import { useAuth } from '../context/AuthContext';
+import Icon from './ui/Icon';
+import Button from './ui/Button';
+import Avatar from './ui/Avatar';
+import Badge from './ui/Badge';
+import ThemeToggle from './ui/ThemeToggle';
 
 // The links shown in the sidebar
 const LINKS = [
-  // The chat page
-  { path: '/chat',      icon: '◈', label: 'Chat' },
-  // The history page
-  { path: '/sessions',  icon: '◉', label: 'History' },
-  // The analytics page
-  { path: '/dashboard', icon: '◆', label: 'Analytics' },
+  { path: '/chat',      icon: 'chat',      label: 'Chat' },
+  { path: '/sessions',  icon: 'history',   label: 'History' },
+  { path: '/dashboard', icon: 'dashboard', label: 'Analytics' },
 ];
 
 // The sidebar on the left side of every logged-in page
 export default function Sidebar() {
-  // Get the current user and the logout function
   const { user, logout } = useAuth();
-  // Lets us go to another page
-  const navigate  = useNavigate();
-  // Tells us which page we are on now
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Runs when the user clicks "Sign out"
   function handleLogout() {
-    // Forget the token and the user
     logout();
-    // Go back to the login page
     navigate('/login');
   }
 
   return (
-    <aside
-      // Adds a faint scan-line look (defined in index.css)
-      className="scanlines"
-      style={{
-        // A fixed width for the sidebar
-        width: '240px',
-        // Never let it get narrower
-        minWidth: '240px',
-        // The sidebar color
-        background: 'var(--surface)',
-        // A line between the sidebar and the page
-        borderRight: '1px solid var(--border)',
-        // Stack the content from top to bottom
-        display: 'flex',
-        flexDirection: 'column',
-        // Full screen height
-        height: '100vh',
-        // Hide anything that sticks out
-        overflow: 'hidden',
-      }}
-    >
+    <aside className="w-[240px] min-w-[240px] h-screen overflow-hidden bg-surface border-r border-hairline
+      flex flex-col">
+
       {/* Logo */}
-      {/* The logo area at the top */}
-      <div style={{
-        // Space inside the area
-        padding: '28px 20px 22px',
-        // A line below the logo area
-        borderBottom: '1px solid var(--border)',
-        // Keep it above the scan lines
-        position: 'relative',
-        zIndex: 1,
-      }}>
-        {/* The logo text */}
-        <div style={{
-          // The heading font
-          fontFamily: 'Syne, sans-serif',
-          // The text size
-          fontSize: '15px',
-          // Very bold text
-          fontWeight: 800,
-          // Space between letters
-          letterSpacing: '0.18em',
-          // The green accent color
-          color: 'var(--accent)',
-          // No extra line space
-          lineHeight: 1,
-        }}>
-          {/* The braces make React show the < and > symbols as plain text */}
-          {'<AGENT/>'}
+      <div className="px-5 pt-7 pb-5 border-b border-hairline">
+        <div className="flex items-baseline gap-0.5 leading-none">
+          <span className="font-mono font-semibold text-accent">&lt;</span>
+          <span className="font-display font-extrabold text-[15px] text-ink tracking-tight">AGENT</span>
+          <span className="font-mono font-semibold text-accent">/&gt;</span>
         </div>
-        {/* The small text under the logo */}
-        <div style={{
-          // The code-style font
-          fontFamily: 'JetBrains Mono, monospace',
-          // A tiny text size
-          fontSize: '9px',
-          // The faintest text color
-          color: 'var(--text-3)',
-          // Space above the text
-          marginTop: '7px',
-          // Very wide space between letters
-          letterSpacing: '0.2em',
-        }}>
+        <div className="mt-2 font-mono text-[9px] text-ink-3 tracking-wide2">
           ENTERPRISE · AI · PLATFORM
         </div>
       </div>
 
       {/* New chat button */}
-      {/* The area that holds the "New chat" button */}
-      <div style={{ padding: '14px 14px 6px', position: 'relative', zIndex: 1 }}>
-        <button
-          // Go to the chat page when clicked
-          onClick={() => navigate('/chat')}
-          style={{
-            // Fill the full width
-            width: '100%',
-            // Space inside the button
-            padding: '9px 14px',
-            // A faint green background
-            background: 'var(--accent-glow)',
-            // A faint green border
-            border: '1px solid rgba(0,230,118,0.22)',
-            // Rounded corners
-            borderRadius: '8px',
-            // Green text
-            color: 'var(--accent)',
-            // The text font
-            fontFamily: 'Outfit, sans-serif',
-            // The text size
-            fontSize: '13px',
-            // Medium weight
-            fontWeight: 500,
-            // A hand cursor
-            cursor: 'pointer',
-            // Put the plus sign and text side by side
-            display: 'flex',
-            alignItems: 'center',
-            // Space between the plus sign and the text
-            gap: '8px',
-            // Make the colors change smoothly
-            transition: 'background 0.15s, border-color 0.15s',
-          }}
-          // When the mouse enters: make the background and border stronger
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(0,230,118,0.18)';
-            e.currentTarget.style.borderColor = 'rgba(0,230,118,0.38)';
-          }}
-          // When the mouse leaves: go back to the normal look
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'var(--accent-glow)';
-            e.currentTarget.style.borderColor = 'rgba(0,230,118,0.22)';
-          }}
-        >
-          {/* The plus sign */}
-          <span style={{ fontSize: '17px', lineHeight: 1 }}>+</span>
+      <div className="px-3.5 pt-3.5 pb-1.5">
+        <Button variant="secondary" icon="new-chat" size="sm" className="w-full" onClick={() => navigate('/chat')}>
           New chat
-        </button>
+        </Button>
       </div>
 
       {/* Nav */}
-      {/* The navigation area (it takes all the free space in the middle) */}
-      <nav style={{
-        // Grow to fill the free space
-        flex: 1,
-        // Space inside the area
-        padding: '8px 14px',
-        // Stack the links from top to bottom
-        display: 'flex',
-        flexDirection: 'column',
-        // A tiny space between links
-        gap: '2px',
-        // Keep it above the scan lines
-        position: 'relative',
-        zIndex: 1,
-      }}>
-        {/* The small title above the links */}
-        <div style={{
-          // The code-style font
-          fontFamily: 'JetBrains Mono, monospace',
-          // A tiny text size
-          fontSize: '9px',
-          // The faintest text color
-          color: 'var(--text-3)',
-          // Wide space between letters
-          letterSpacing: '0.18em',
-          // Space inside the title
-          padding: '8px 8px 6px',
-        }}>
+      <nav className="flex-1 px-3.5 py-2 flex flex-col gap-0.5">
+        <div className="font-mono text-[9px] text-ink-3 tracking-wide2 px-2 pt-2 pb-1.5">
           NAVIGATE
         </div>
 
-        {/* Make one button for each link */}
         {LINKS.map(({ path, icon, label }) => {
-          // True if this link is the page we are on now
           const active = location.pathname === path;
           return (
             <button
-              // React needs a unique key for each item in a list
               key={path}
-              // Go to the page when clicked
               onClick={() => navigate(path)}
-              style={{
-                // Fill the full width
-                width: '100%',
-                // Space inside the button
-                padding: '10px 12px',
-                // A faint green background if this is the current page
-                background: active ? 'rgba(0,230,118,0.08)' : 'transparent',
-                // A faint green border if this is the current page
-                border: active ? '1px solid rgba(0,230,118,0.18)' : '1px solid transparent',
-                // Rounded corners
-                borderRadius: '8px',
-                // Green text if this is the current page
-                color: active ? 'var(--accent)' : 'var(--text-2)',
-                // The text font
-                fontFamily: 'Outfit, sans-serif',
-                // The text size
-                fontSize: '13px',
-                // Bolder text if this is the current page
-                fontWeight: active ? 600 : 400,
-                // A hand cursor
-                cursor: 'pointer',
-                // Put the icon and text side by side
-                display: 'flex',
-                alignItems: 'center',
-                // Space between the icon and the text
-                gap: '10px',
-                // Align the text to the left
-                textAlign: 'left',
-                // Make the colors change smoothly
-                transition: 'all 0.15s',
-              }}
-              // When the mouse enters: highlight it (only if it is not the current page)
-              onMouseEnter={e => {
-                if (!active) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.color = 'var(--text-1)';
-                }
-              }}
-              // When the mouse leaves: go back to normal (only if it is not the current page)
-              onMouseLeave={e => {
-                if (!active) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-2)';
-                }
-              }}
+              className={`w-full flex items-center gap-2.5 px-2.5 py-2.5 text-left text-[13px]
+                border-l-2 transition-colors duration-150
+                ${active
+                  ? 'border-l-accent text-accent bg-card font-medium'
+                  : 'border-l-transparent text-ink-2 hover:text-ink hover:border-l-hairline-hi'}`}
             >
-              {/* The icon (brighter when this is the current page) */}
-              <span style={{ fontSize: '11px', opacity: active ? 1 : 0.55, width: '14px' }}>{icon}</span>
-              {/* The link text */}
+              <Icon name={icon} size={16} />
               {label}
-              {/* Show a small glowing dot on the right only for the current page */}
-              {active && (
-                <span style={{
-                  // Push the dot to the far right
-                  marginLeft: 'auto',
-                  // The size of the dot
-                  width: '4px',
-                  height: '4px',
-                  // Make it a circle
-                  borderRadius: '50%',
-                  // The green accent color
-                  background: 'var(--accent)',
-                  // A soft glow around the dot
-                  boxShadow: '0 0 6px var(--accent)',
-                }} />
-              )}
             </button>
           );
         })}
       </nav>
 
       {/* User section */}
-      {/* The area at the bottom that shows who is logged in */}
-      <div style={{
-        // Space inside the area
-        padding: '14px 14px 20px',
-        // A line above this area
-        borderTop: '1px solid var(--border)',
-        // Keep it above the scan lines
-        position: 'relative',
-        zIndex: 1,
-      }}>
-        {/* A row with the avatar and the user's details */}
-        <div style={{
-          // Put the avatar and details side by side
-          display: 'flex',
-          alignItems: 'center',
-          // Space between them
-          gap: '10px',
-          // Space below the row
-          marginBottom: '10px',
-        }}>
-          {/* Avatar */}
-          {/* A small square that shows the first letter of the email */}
-          <div style={{
-            // The size of the square
-            width: '32px',
-            height: '32px',
-            // Rounded corners
-            borderRadius: '8px',
-            // A dark blue gradient background
-            background: 'linear-gradient(135deg, #1a2a4a, #0f1f3a)',
-            // A thin border
-            border: '1px solid var(--border-hi)',
-            // Center the letter both ways
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            // The heading font
-            fontFamily: 'Syne, sans-serif',
-            // Very bold text
-            fontWeight: 800,
-            // The text size
-            fontSize: '13px',
-            // The green accent color
-            color: 'var(--accent)',
-            // Don't let the square shrink
-            flexShrink: 0,
-          }}>
-            {/* The first letter of the email in capitals, or "?" if there is no email */}
-            {user?.email?.[0]?.toUpperCase() ?? '?'}
-          </div>
-          {/* The email and role, taking the rest of the row */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {/* The user's email */}
-            <div style={{
-              // The text size
-              fontSize: '12px',
-              // The main text color
-              color: 'var(--text-1)',
-              // Cut long emails and show "..." at the end
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              // Medium weight
-              fontWeight: 500,
-            }}>
-              {user?.email}
-            </div>
-            {/* The role, just below the email */}
-            <div style={{ marginTop: '3px' }}>
-              {/* Admins get a gold badge, everyone else gets plain text */}
+      <div className="px-3.5 pt-3.5 pb-5 border-t border-hairline">
+        <div className="flex items-center gap-2.5 mb-3">
+          <Avatar initial={user?.email?.[0]} kind="user" size={32} />
+          <div className="flex-1 min-w-0">
+            <div className="text-[12px] text-ink font-medium truncate">{user?.email}</div>
+            <div className="mt-0.5">
               {user?.role === 'ADMIN' ? (
-                // The gold ADMIN badge
-                <span style={{
-                  // A tiny text size
-                  fontSize: '9px',
-                  // The code-style font
-                  fontFamily: 'JetBrains Mono, monospace',
-                  // Space between letters
-                  letterSpacing: '0.1em',
-                  // Gold text
-                  color: 'var(--gold)',
-                  // A faint gold background
-                  background: 'rgba(251,191,36,0.1)',
-                  // A faint gold border
-                  border: '1px solid rgba(251,191,36,0.22)',
-                  // Space inside the badge
-                  padding: '1px 5px',
-                  // Slightly rounded corners
-                  borderRadius: '3px',
-                }}>
-                  ADMIN
-                </span>
+                <Badge tone="admin">ADMIN</Badge>
               ) : (
-                // The plain role text
-                <span style={{
-                  // A tiny text size
-                  fontSize: '9px',
-                  // The code-style font
-                  fontFamily: 'JetBrains Mono, monospace',
-                  // The faintest text color
-                  color: 'var(--text-3)',
-                  // Space between letters
-                  letterSpacing: '0.08em',
-                }}>
-                  {user?.role}
-                </span>
+                <span className="font-mono text-[9px] text-ink-3 tracking-micro">{user?.role}</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* The sign out button */}
-        <button
-          // Log out when clicked
-          onClick={handleLogout}
-          style={{
-            // Fill the full width
-            width: '100%',
-            // Space inside the button
-            padding: '8px',
-            // No background color
-            background: 'transparent',
-            // A thin border
-            border: '1px solid var(--border)',
-            // Rounded corners
-            borderRadius: '6px',
-            // A softer text color
-            color: 'var(--text-2)',
-            // The text size
-            fontSize: '12px',
-            // The text font
-            fontFamily: 'Outfit, sans-serif',
-            // A hand cursor
-            cursor: 'pointer',
-            // Make the colors change smoothly
-            transition: 'all 0.15s',
-          }}
-          // When the mouse enters: turn red to warn that this leaves the app
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'rgba(255,82,82,0.35)';
-            e.currentTarget.style.color = '#ff5252';
-            e.currentTarget.style.background = 'rgba(255,82,82,0.06)';
-          }}
-          // When the mouse leaves: go back to the normal look
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'var(--border)';
-            e.currentTarget.style.color = 'var(--text-2)';
-            e.currentTarget.style.background = 'transparent';
-          }}
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          <Button variant="danger" size="sm" icon="sign-out" className="flex-1" onClick={handleLogout}>
+            Sign out
+          </Button>
+          <ThemeToggle />
+        </div>
       </div>
     </aside>
   );

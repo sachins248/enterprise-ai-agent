@@ -1,23 +1,29 @@
 <!doctype html>
-<!-- The line above tells the browser this is a modern HTML5 page -->
-<!-- The whole page is in English -->
 <html lang="en">
-  <!-- Information about the page (not shown on the page itself) -->
   <head>
-    <!-- Use UTF-8 so all characters (like arrows and symbols) show correctly -->
     <meta charset="UTF-8" />
-    <!-- The small icon shown in the browser tab -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <!-- Makes the page fit the screen width on phones -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- The text shown in the browser tab -->
-    <title>frontend</title>
+    <title>Agent — Enterprise AI Coding Platform</title>
+    <meta name="description" content="Enterprise AI coding agent with real-time streaming chat, session history, GitHub pipeline analysis, and team analytics." />
+    <script>
+      // Set the theme before anything paints, so there's no flash of the
+      // wrong theme on load. Mirrors the logic in ThemeContext.jsx.
+      (function () {
+        try {
+          var stored = localStorage.getItem('agent-theme');
+          var theme = stored === 'light' || stored === 'dark'
+            ? stored
+            : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
   </head>
-  <!-- Everything you see on the page -->
   <body>
-    <!-- React puts the whole app inside this empty box -->
     <div id="root"></div>
-    <!-- Load our app's starting file (type="module" lets us use import) -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
